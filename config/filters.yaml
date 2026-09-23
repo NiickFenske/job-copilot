@@ -1,0 +1,50 @@
+# A job is KEPT only if it passes all of these.
+
+# Title must contain at least one of these (case-insensitive substring match)
+title_include:
+  - "engineer"
+  - "developer"
+  - "onboarding"
+  - "solutions"
+  - "implementation"
+  - "technical support"
+  - "support specialist"
+  - "shopify"
+  - "account manager"
+  - "customer success"
+  - "integrations"
+  - "partner engineer"
+  - "professional services"
+  - "technical trainer"
+  - "customer education"
+
+# Title is rejected if it contains any of these, even if it matched an include term
+title_exclude:
+  - "intern"
+  - "director"
+  - "vp "
+  - "principal"
+
+# Location allowlist - regex patterns, case-insensitive. A job is kept if its
+# location string matches ANY of these, or if remote_ok is true and the job
+# looks remote. Onsite/hybrid postings outside Winnipeg are filtered out here;
+# Canada-wide remote roles pass because "remote" or "canada" will match.
+location_allow_patterns:
+  - "remote"
+  - "winnipeg"
+  - "manitoba"
+  - "canada"
+
+remote_ok: true
+
+# If the job description mentions any of these AND none of stack_core, it's rejected.
+stack_dealbreakers:
+  - "java "
+  - "c#"
+  - ".net"
+
+stack_core:
+  - "javascript"
+  - "typescript"
+  - "node"
+  - "react"

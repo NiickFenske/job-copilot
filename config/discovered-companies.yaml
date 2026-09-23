@@ -1,0 +1,44 @@
+# Auto-discovered by "npm run discover" - REVIEW before copying into companies.yaml.
+# Each entry below was found by actually fetching that company's careers page and
+# spotting a known ATS link on it, so these should be real, but double check the
+# company name matches who you think it is (generic names can collide).
+
+- name: "Okendo"
+  ats: lever
+  slug: "okendo"
+- name: "Rebuy"
+  ats: ashby
+  slug: "rebuy"
+- name: "Smile.io"
+  ats: lever
+  slug: "Smile"
+- name: "Tapcart"
+  ats: ashby
+  slug: "tapcart"
+- name: "Loop Returns"
+  ats: lever
+  slug: "loopreturns"
+- name: "Privy"
+  ats: workable
+  slug: "privy-2"
+- name: "Pixel Union"
+  ats: workable
+  slug: "pixel-union"
+- name: "Trigger.dev"
+  ats: ashby
+  slug: "triggerdev"
+- name: "LiveKit"
+  ats: ashby
+  slug: "livekit"
+- name: "Nango"
+  ats: ashby
+  slug: "Nango"
+- name: "Infisical"
+  ats: ashby
+  slug: "infisical"
+- name: "1Password"
+  ats: ashby
+  slug: "1password"
+- name: "Hotjar"
+  ats: lever
+  slug: "contentsquare"

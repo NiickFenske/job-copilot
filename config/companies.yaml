@@ -1,0 +1,84 @@
+# Verify each slug by running "npm run fetch" - if a company logs "0 jobs" or
+# an HTTP error, double check its careers page URL for the exact slug.
+#
+# ats must be one of: greenhouse | lever | ashby | workable | recruitee
+
+# --- CONFIRMED: manually verified via real job posting URLs ---
+- name: "Shopify"
+  ats: greenhouse
+  slug: "shopify"
+- name: "Klaviyo"
+  ats: greenhouse
+  slug: "klaviyo"
+- name: "Recharge"
+  ats: greenhouse
+  slug: "recharge"
+- name: "Yotpo"
+  ats: greenhouse
+  slug: "yotpo"
+- name: "Gorgias"
+  ats: workable
+  slug: "gorgias"
+- name: "Postscript"
+  ats: greenhouse
+  slug: "postscript"
+- name: "Zapier"
+  ats: ashby
+  slug: "zapier"
+
+# --- CONFIRMED: found via "npm run discover" auto-detection, clean matches ---
+- name: "Okendo"
+  ats: lever
+  slug: "okendo"
+- name: "Rebuy"
+  ats: ashby
+  slug: "rebuy"
+- name: "Tapcart"
+  ats: ashby
+  slug: "tapcart"
+- name: "Loop Returns"
+  ats: lever
+  slug: "loopreturns"
+- name: "Pixel Union"
+  ats: workable
+  slug: "pixel-union"
+- name: "Trigger.dev"
+  ats: ashby
+  slug: "triggerdev"
+- name: "LiveKit"
+  ats: ashby
+  slug: "livekit"
+- name: "Infisical"
+  ats: ashby
+  slug: "infisical"
+- name: "1Password"
+  ats: ashby
+  slug: "1password"
+
+# --- NEEDS A QUICK MANUAL CHECK before fully trusting - unusual capitalization
+# or a name mismatch worth confirming in a browser first. If wrong, "npm run
+# fetch" just logs 0 jobs/an error for that one entry - low risk either way.
+- name: "Smile.io"
+  ats: lever
+  slug: "Smile"           # capital S is unusual for Lever - verify jobs.lever.co/Smile loads real jobs
+- name: "Privy"
+  ats: workable
+  slug: "privy-2"          # the "-2" suggests "privy" was taken by another account - verify
+- name: "Nango"
+  ats: ashby
+  slug: "Nango"            # capital N is unusual for Ashby - verify jobs.ashbyhq.com/Nango loads real jobs
+- name: "Hotjar"
+  ats: lever
+  slug: "contentsquare"    # plausible (Hotjar merged with Contentsquare) but worth a quick check
+
+# --- Companies to research further - either no ATS detected (may use a
+# JS-rendered page, or a platform we don't support), or found via search but
+# not confirmed as a direct-ATS entry (see conversation history for details):
+# Judge.me (uses Welcome to the Jungle, not one of our 5 supported platforms)
+# PostHog, Deel (custom-domain careers pages, ATS undetermined)
+# Shogun, Recart, PageFly, Stamped.io, ReConvert, OptiMonk, Omnisend,
+#   LoyaltyLion, Skio, Searchanise, Klevu, AfterShip, Tidio, Justuno
+# Corra, Electric Eye, Blend Commerce, Half Helix, Fuel Made, Groove Commerce,
+#   Ready Set Rocket, We Make Websites, Coalition Technologies, Arctic Grey
+# Maestrooo, Cal.com, Metabase, Plausible, Svix, Novu, Railway, Flagsmith,
+#   Appsmith, Refine, Amplication, Hoppscotch, Daily.dev, Ashby (the company), Doist

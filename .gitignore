@@ -1,0 +1,9 @@
+node_modules/
+dist/
+data/
+.env
+config/profile.yaml
+config/*.pdf
+config/*.docx
+dashboard/.next/
+dashboard/node_modules/

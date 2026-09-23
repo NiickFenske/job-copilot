@@ -1,0 +1,154 @@
+# Seed list for "npm run discover" - real company names + their website domain.
+# The discovery script checks each domain's careers page for signs of a known
+# ATS (Greenhouse/Lever/Ashby/Workable/Recruitee) and reports matches for you
+# to review and promote into companies.yaml. It does NOT guess ATS slugs -
+# only reports what it actually finds on the live page.
+#
+# Add more rows yourself any time - just company name + bare domain (no
+# https://, no /careers). Good sources for more names: Shopify's App Store
+# (apps.shopify.com) browsed by category, and Shopify's Partner/Experts
+# directory (experts.shopify.com) for agencies - both are public directories
+# meant for browsing, so copying names/domains you find there into this file
+# is completely fine; this file just holds names, not scraped data.
+
+# --- App / platform companies ---
+- name: "Okendo"
+  domain: "okendo.io"
+- name: "Rebuy"
+  domain: "rebuyengine.com"
+- name: "Smile.io"
+  domain: "smile.io"
+- name: "Tapcart"
+  domain: "tapcart.com"
+- name: "Shogun"
+  domain: "getshogun.com"
+- name: "Recart"
+  domain: "recart.com"
+- name: "PageFly"
+  domain: "pagefly.io"
+- name: "Judge.me"
+  domain: "judge.me"
+  # NOTE: confirmed to use "Welcome to the Jungle" ATS (not one of our 5
+  # supported platforms - no public API found for it). This script will
+  # report "no ATS detected" for it, which is expected. Their board is at
+  # https://ats.welcometothejungle.com/board/judge-me-XAUBME - check manually.
+- name: "Stamped.io"
+  domain: "stamped.io"
+- name: "ReConvert"
+  domain: "reconvert.io"
+- name: "Postscript"
+  domain: "postscript.io"
+- name: "Loop Returns"
+  domain: "loopreturns.com"
+
+# --- Additional app companies found via search - well-established, independently
+# verifiable SaaS products (higher confidence than the agencies list below) ---
+- name: "Privy"
+  domain: "privy.com"
+- name: "OptiMonk"
+  domain: "optimonk.com"
+- name: "Omnisend"
+  domain: "omnisend.com"
+- name: "LoyaltyLion"
+  domain: "loyaltylion.com"
+- name: "Skio"
+  domain: "skio.com"
+- name: "Searchanise"
+  domain: "searchanise.io"
+- name: "Klevu"
+  domain: "klevu.com"
+- name: "AfterShip"
+  domain: "aftership.com"
+- name: "Tidio"
+  domain: "tidio.com"
+- name: "Justuno"
+  domain: "justuno.com"
+
+# --- Agencies (Shopify Plus Partners) ---
+- name: "Corra"
+  domain: "corra.com"
+- name: "Electric Eye"
+  domain: "electriceye.io"
+- name: "Blend Commerce"
+  domain: "blendcommerce.com"
+- name: "Half Helix"
+  domain: "halfhelix.com"
+- name: "Fuel Made"
+  domain: "fuelmade.com"
+- name: "Groove Commerce"
+  domain: "groovecommerce.com"
+- name: "Ready Set Rocket"
+  domain: "readysetrocket.com"
+
+# --- Additional agencies found via search - LOWER CONFIDENCE. These came from
+# "top Shopify Plus agency" listicle articles, which are frequently
+# marketing/SEO content (sometimes agencies ranking themselves) rather than
+# independent reporting. Names are real companies, but domains below are my
+# best guess and unverified - double check before relying on results. ---
+- name: "We Make Websites"
+  domain: "wemakewebsites.com"
+- name: "Coalition Technologies"
+  domain: "coalitiontechnologies.com"
+- name: "Arctic Grey"
+  domain: "arcticgrey.com"
+
+# --- Theme developers ---
+- name: "Pixel Union"
+  domain: "pixelunion.net"
+- name: "Maestrooo"
+  domain: "maestrooo.com"
+
+# --- General dev-tool/SaaS startups (from a curated LinkedIn list) - not
+# Shopify-specific, but a solid fit for your general full-stack/frontend
+# target titles. Modern VC-funded dev-tool companies skew heavily toward
+# Ashby/Greenhouse, so expect a higher hit rate here than the e-commerce
+# app/agency batches above. ---
+- name: "PostHog"
+  domain: "posthog.com"
+- name: "Cal.com"
+  domain: "cal.com"
+- name: "Metabase"
+  domain: "metabase.com"
+- name: "Trigger.dev"
+  domain: "trigger.dev"
+- name: "Plausible"
+  domain: "plausible.io"
+- name: "Svix"
+  domain: "svix.com"
+- name: "Novu"
+  domain: "novu.co"
+- name: "Railway"
+  domain: "railway.com"
+- name: "LiveKit"
+  domain: "livekit.io"
+- name: "Nango"
+  domain: "nango.dev"
+- name: "Flagsmith"
+  domain: "flagsmith.com"
+- name: "Appsmith"
+  domain: "appsmith.com"
+- name: "Refine"
+  domain: "refine.dev"
+- name: "Amplication"
+  domain: "amplication.com"
+- name: "Hoppscotch"
+  domain: "hoppscotch.io"
+- name: "Daily.dev"
+  domain: "daily.dev"
+- name: "Infisical"
+  domain: "infisical.com"
+- name: "Zapier"
+  domain: "zapier.com"
+- name: "1Password"
+  domain: "1password.com"
+- name: "Deel"
+  domain: "deel.com"
+- name: "Ashby"
+  domain: "ashbyhq.com"
+  # NOTE: this is literally the company behind the Ashby ATS this project
+  # already uses - a naming coincidence, not a mistake. Expect this one to
+  # resolve to ats: ashby almost certainly.
+- name: "Doist"
+  domain: "doist.com"
+- name: "Hotjar"
+  domain: "hotjar.com"
