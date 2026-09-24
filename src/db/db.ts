@@ -58,19 +58,25 @@ export interface Job {
 }
 
 const insertStmt = db.prepare(`
-  INSERT OR IGNORE INTO jobs (source, company, title, location, description, apply_url, posted_at, dedup_key)
-  VALUES (@source, @company, @title, @location, @description, @apply_url, @posted_at, @dedup_key)
+  INSERT OR IGNORE INTO jobs (source, company, title, location, description, apply_url, posted_at, dedup_key, fetched_at)
+  VALUES (@source, @company, @title, @location, @description, @apply_url, @posted_at, @dedup_key, @fetched_at)
 `);
 
 /** Insert a job if we haven't seen this company+title before. Returns true if it was new. */
 export function insertJobIfNew(job: Job): boolean {
   // better-sqlite3 requires every named parameter to be present (undefined is
   // not allowed even for optional columns), so fill in nulls explicitly.
+  // fetched_at is generated here (not left to SQLite's own default) so every
+  // row uses the same JS-native ISO format the dashboard compares against -
+  // mixing SQLite's "datetime('now')" (space-separated, no 'Z') with JS's
+  // toISOString() (T-separated, with 'Z') breaks simple string comparisons
+  // like the dashboard's "is this job newer than my last visit" check.
   const params = {
     location: null,
     description: null,
     posted_at: null,
     ...job,
+    fetched_at: new Date().toISOString(), // always generated here, never inherited from the caller, so every row stays in the same consistent format
   };
   const result = insertStmt.run(params);
   return result.changes > 0;

@@ -81,13 +81,20 @@ async function fetchAllAggregators(): Promise<Job[]> {
   // Jooble and Adzuna are optional - they need free API keys (see .env.example).
   // Their fetchers silently return [] if the keys aren't set, so these calls
   // are always safe to leave in even before you've signed up.
+  // Search both "Remote" and "Manitoba" for each term - remote is the stated
+  // primary preference, Manitoba covers local/hybrid roles. Searching only
+  // "Manitoba" (as this used to do) would silently miss remote postings that
+  // don't happen to mention Manitoba by name anywhere in their text.
+  const joobleLocations = ["Remote", "Manitoba"];
   for (const term of searchTerms) {
-    try {
-      const jobs = await fetchJooble(term, "Manitoba");
-      if (jobs.length > 0) console.log(`  jooble "${term}": ${jobs.length} jobs`);
-      results.push(...jobs);
-    } catch (err) {
-      console.warn(`  jooble "${term}": fetch failed -`, (err as Error).message);
+    for (const location of joobleLocations) {
+      try {
+        const jobs = await fetchJooble(term, location);
+        if (jobs.length > 0) console.log(`  jooble "${term}" (${location}): ${jobs.length} jobs`);
+        results.push(...jobs);
+      } catch (err) {
+        console.warn(`  jooble "${term}" (${location}): fetch failed -`, (err as Error).message);
+      }
     }
 
     try {
