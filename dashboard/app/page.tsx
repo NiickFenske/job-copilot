@@ -23,14 +23,22 @@ interface Job {
 }
 
 const STATUS_OPTIONS = ["new", "applied", "interview", "rejected", "skipped"];
-const LOW_SCORE_CUTOFF = 5;
-const LAST_VIEWED_KEY = "job-copilot:last-viewed-at";
+const LOW_SCORE_CUTOFF = 10;
 
 function scoreColor(score: number | null) {
   if (score === null) return "#8b949e";
   if (score >= 75) return "#3fb950";
   if (score >= 50) return "#d29922";
   return "#f85149";
+}
+
+// Local calendar-day key (YYYY-MM-DD in the browser's own timezone, not UTC) -
+// using local time matters here: fetched_at is stored in UTC, and comparing
+// raw UTC dates could show a job fetched at, say, 7pm Winnipeg time as
+// "tomorrow" since that's already past midnight UTC, which wouldn't match
+// what "today" actually means to whoever's looking at the dashboard.
+function localDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function parseJsonArray(raw: string | null): string[] {
@@ -167,28 +175,13 @@ export default function Page() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLowScores, setShowLowScores] = useState(false);
-  const [lastViewedAt, setLastViewedAt] = useState<string | null>(null);
-  const [newSectionDismissed, setNewSectionDismissed] = useState(false);
+  const [foldedIntoMain, setFoldedIntoMain] = useState(false);
 
   useEffect(() => {
     fetch("/api/jobs").then((r) => r.json()).then((data) => {
       setJobs(data);
       setLoading(false);
     });
-
-    // Read the last-viewed timestamp BEFORE overwriting it, so this load
-    // still shows what's new since your last visit. First-ever visit has no
-    // stored value - treat everything as "already seen" rather than dumping
-    // your whole backlog into the "new" section.
-    try {
-      const stored = localStorage.getItem(LAST_VIEWED_KEY);
-      setLastViewedAt(stored ?? new Date().toISOString());
-      localStorage.setItem(LAST_VIEWED_KEY, new Date().toISOString());
-    } catch {
-      // localStorage unavailable (private browsing etc.) - just skip the
-      // "new since last visit" feature gracefully, nothing else breaks
-      setLastViewedAt(new Date().toISOString());
-    }
   }, []);
 
   async function updateStatus(id: number, status: string) {
@@ -202,9 +195,11 @@ export default function Page() {
 
   if (loading) return <div style={{ padding: 32, color: "#e6edf3" }}>Loading...</div>;
 
-  const newJobs = lastViewedAt && !newSectionDismissed
-    ? jobs.filter((j) => j.fetched_at > lastViewedAt)
-    : [];
+  // "New" = fetched today, by local calendar date. This naturally ages out at
+  // midnight with no state to track - reload the dashboard 50 times today and
+  // it stays "new"; check tomorrow and it's just part of the regular list.
+  const todayKey = localDateKey(new Date());
+  const newJobs = !foldedIntoMain ? jobs.filter((j) => localDateKey(new Date(j.fetched_at)) === todayKey) : [];
 
   const lowScoreCount = jobs.filter((j) => j.fit_score !== null && j.fit_score <= LOW_SCORE_CUTOFF).length;
   const visibleJobs = (showLowScores ? jobs : jobs.filter((j) => j.fit_score === null || j.fit_score > LOW_SCORE_CUTOFF))
@@ -236,10 +231,10 @@ export default function Page() {
               🆕 New since your last visit ({newJobs.length})
             </h2>
             <button
-              onClick={() => setNewSectionDismissed(true)}
+              onClick={() => setFoldedIntoMain(true)}
               style={{ background: "none", border: "none", color: "#58a6ff", cursor: "pointer", fontSize: 13, textDecoration: "underline" }}
             >
-              Dismiss, fold into main list
+              Fold into main list for now
             </button>
           </div>
           {newJobs
