@@ -14,7 +14,7 @@ import { fetchRemoteOk } from "../fetchers/remoteok.js";
 import { fetchArbeitnow } from "../fetchers/arbeitnow.js";
 import { fetchJooble } from "../fetchers/jooble.js";
 import { fetchAdzuna } from "../fetchers/adzuna.js";
-import { passesFilters } from "../filters.js";
+import { titleIsAllowed, locationIsAllowed, stackIsAllowed } from "../filters.js";
 import { insertJobIfNew, type Job } from "../db/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -119,15 +119,37 @@ async function main() {
   const all = [...companyJobs, ...aggregatorJobs];
   console.log(`\nFetched ${all.length} total postings before filtering.`);
 
-  let kept = 0;
-  let inserted = 0;
+  // Per-source tracking: how many each source returned, how many survived
+  // filtering (and why the rest didn't), and how many were genuinely new.
+  // Without this, one summary number hides which sources are actually
+  // contributing - and which are silently being filtered down to nothing.
+  const stats: Record<string, { fetched: number; passed: number; inserted: number; badTitle: number; badLocation: number; badStack: number }> = {};
+  const statFor = (source: string) =>
+    (stats[source] ??= { fetched: 0, passed: 0, inserted: 0, badTitle: 0, badLocation: 0, badStack: 0 });
+
   for (const job of all) {
-    if (!passesFilters(job)) continue;
-    kept++;
-    if (insertJobIfNew(job)) inserted++;
+    const s = statFor(job.source);
+    s.fetched++;
+
+    if (!titleIsAllowed(job.title)) { s.badTitle++; continue; }
+    if (!locationIsAllowed(job.location ?? "")) { s.badLocation++; continue; }
+    if (!stackIsAllowed(job.description ?? "")) { s.badStack++; continue; }
+
+    s.passed++;
+    if (insertJobIfNew(job)) s.inserted++;
   }
 
-  console.log(`${kept} passed filters, ${inserted} were new and inserted into the database.`);
+  console.log("\nPer-source breakdown:");
+  console.log("  source       fetched  passed  new  | dropped: title  location  stack");
+  for (const [source, s] of Object.entries(stats).sort((a, b) => b[1].fetched - a[1].fetched)) {
+    console.log(
+      `  ${source.padEnd(12)} ${String(s.fetched).padStart(7)}  ${String(s.passed).padStart(6)}  ${String(s.inserted).padStart(3)}  |          ${String(s.badTitle).padStart(5)}  ${String(s.badLocation).padStart(8)}  ${String(s.badStack).padStart(5)}`
+    );
+  }
+
+  const totalPassed = Object.values(stats).reduce((n, s) => n + s.passed, 0);
+  const totalInserted = Object.values(stats).reduce((n, s) => n + s.inserted, 0);
+  console.log(`\n${totalPassed} passed filters, ${totalInserted} were new and inserted into the database.`);
   console.log(`Run "npm run score" next to have Claude score fit for the new jobs.`);
 }
 

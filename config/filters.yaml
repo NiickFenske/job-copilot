@@ -17,6 +17,10 @@ title_include:
   - "professional services"
   - "technical trainer"
   - "customer education"
+  - "presales"
+  - "pre-sales"
+  - "sales engineer"
+  - "technical sales"
 
 # Title is rejected if it contains any of these, even if it matched an include term
 title_exclude:
@@ -34,6 +38,15 @@ location_allow_patterns:
   - "winnipeg"
   - "manitoba"
   - "canada"
+  # Aggregators like Remotive and RemoteOK label open-to-anyone remote jobs with
+  # these instead of the word "remote" - without them, those jobs were silently
+  # dropped before ever reaching the scorer. Any explicit country restriction
+  # (e.g. "US only") is still caught later by the scorer's work-authorization check.
+  - "worldwide"
+  - "anywhere"
+  - "global"
+  - "north america"
+  - "americas"
 
 remote_ok: true
 

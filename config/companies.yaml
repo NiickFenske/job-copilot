@@ -1,47 +1,42 @@
-# Verify each slug by running "npm run fetch" - if a company logs "0 jobs" or
-# an HTTP error, double check its careers page URL for the exact slug.
+# Direct-from-ATS sources. Each entry is queried straight from that company's
+# own public job feed. A wrong slug just logs an error/0 jobs for that entry.
 #
 # ats must be one of: greenhouse | lever | ashby | workable | recruitee
 
-# --- CONFIRMED: manually verified via real job posting URLs ---
-- name: "Shopify"
-  ats: greenhouse
-  slug: "shopify"
+# --- WORKING: confirmed by a real run returning jobs ---
 - name: "Klaviyo"
   ats: greenhouse
   slug: "klaviyo"
-- name: "Recharge"
-  ats: greenhouse
-  slug: "recharge"
 - name: "Yotpo"
   ats: greenhouse
   slug: "yotpo"
-- name: "Gorgias"
-  ats: workable
-  slug: "gorgias"
 - name: "Postscript"
   ats: greenhouse
   slug: "postscript"
+- name: "Recharge"
+  ats: ashby          # confirmed from live posting links on getrecharge.com/careers
+  slug: "recharge"    # (previously mislabeled as greenhouse, which 404'd)
 - name: "Zapier"
   ats: ashby
   slug: "zapier"
-
-# --- CONFIRMED: found via "npm run discover" auto-detection, clean matches ---
+- name: "Xsolla"
+  ats: lever
+  slug: "xsolla"
 - name: "Okendo"
   ats: lever
   slug: "okendo"
+- name: "Loop Returns"
+  ats: lever
+  slug: "loopreturns"
+- name: "Hotjar"
+  ats: lever
+  slug: "contentsquare"   # Hotjar's board lives under its parent, Contentsquare
 - name: "Rebuy"
   ats: ashby
   slug: "rebuy"
 - name: "Tapcart"
   ats: ashby
   slug: "tapcart"
-- name: "Loop Returns"
-  ats: lever
-  slug: "loopreturns"
-- name: "Pixel Union"
-  ats: workable
-  slug: "pixel-union"
 - name: "Trigger.dev"
   ats: ashby
   slug: "triggerdev"
@@ -54,31 +49,32 @@
 - name: "1Password"
   ats: ashby
   slug: "1password"
-
-# --- NEEDS A QUICK MANUAL CHECK before fully trusting - unusual capitalization
-# or a name mismatch worth confirming in a browser first. If wrong, "npm run
-# fetch" just logs 0 jobs/an error for that one entry - low risk either way.
-- name: "Smile.io"
-  ats: lever
-  slug: "Smile"           # capital S is unusual for Lever - verify jobs.lever.co/Smile loads real jobs
-- name: "Privy"
-  ats: workable
-  slug: "privy-2"          # the "-2" suggests "privy" was taken by another account - verify
 - name: "Nango"
   ats: ashby
-  slug: "Nango"            # capital N is unusual for Ashby - verify jobs.ashbyhq.com/Nango loads real jobs
-- name: "Hotjar"
-  ats: lever
-  slug: "contentsquare"    # plausible (Hotjar merged with Contentsquare) but worth a quick check
+  slug: "Nango"
 
-# --- Companies to research further - either no ATS detected (may use a
-# JS-rendered page, or a platform we don't support), or found via search but
-# not confirmed as a direct-ATS entry (see conversation history for details):
-# Judge.me (uses Welcome to the Jungle, not one of our 5 supported platforms)
-# PostHog, Deel (custom-domain careers pages, ATS undetermined)
-# Shogun, Recart, PageFly, Stamped.io, ReConvert, OptiMonk, Omnisend,
-#   LoyaltyLion, Skio, Searchanise, Klevu, AfterShip, Tidio, Justuno
-# Corra, Electric Eye, Blend Commerce, Half Helix, Fuel Made, Groove Commerce,
-#   Ready Set Rocket, We Make Websites, Coalition Technologies, Arctic Grey
-# Maestrooo, Cal.com, Metabase, Plausible, Svix, Novu, Railway, Flagsmith,
-#   Appsmith, Refine, Amplication, Hoppscotch, Daily.dev, Ashby (the company), Doist
+# --- VALID BOARD, NO OPENINGS RIGHT NOW: kept so new postings get picked up ---
+# (Workable answers with an empty job list; a warning prints each run. Harmless.)
+- name: "Pixel Union"
+  ats: workable
+  slug: "pixel-union"
+
+# --- REMOVED / PARKED: don't uncomment without a fresh working URL ---
+# Shopify   - hires through its own in-house site (shopify.com/careers/<title>_<id>),
+#             not a public ATS feed we can query, and the site disallows automated
+#             access. Shopify postings still arrive via Jooble/Adzuna, and LinkedIn/Indeed.
+# Smile.io  - careers page says "No open roles right now"; no live board to query.
+#             Revisit if they start hiring.
+# Gorgias   - its Workable account (apply.workable.com/gorgias) is dormant/empty, so it
+#             has likely moved to a different ATS. Find a current job posting URL on
+#             gorgias.com/careers, then add it with the right ats + slug.
+# Privy     - only a stale "privy-2" Workable account found (empty). Real board unknown.
+
+# --- Unresolved candidates (no ATS detected yet; check manually, then add above) ---
+# PostHog, Deel (custom-domain careers pages), Judge.me (Welcome to the Jungle),
+# Shogun, Recart, PageFly, Stamped.io, ReConvert, OptiMonk, Omnisend, LoyaltyLion,
+# Skio, Searchanise, Klevu, AfterShip, Tidio, Justuno, Corra, Electric Eye,
+# Blend Commerce, Half Helix, Fuel Made, Groove Commerce, Ready Set Rocket,
+# We Make Websites, Coalition Technologies, Arctic Grey, Maestrooo, Cal.com,
+# Metabase, Plausible, Svix, Novu, Railway, Flagsmith, Appsmith, Refine,
+# Amplication, Hoppscotch, Daily.dev, Ashby (the company), Doist
