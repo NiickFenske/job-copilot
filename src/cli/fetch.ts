@@ -8,6 +8,7 @@ import { fetchGreenhouse } from "../fetchers/greenhouse.js";
 import { fetchLever } from "../fetchers/lever.js";
 import { fetchAshby } from "../fetchers/ashby.js";
 import { fetchWorkable } from "../fetchers/workable.js";
+import { fetchSmartRecruiters } from "../fetchers/smartrecruiters.js";
 import { fetchRecruitee } from "../fetchers/recruitee.js";
 import { fetchRemotive } from "../fetchers/remotive.js";
 import { fetchRemoteOk } from "../fetchers/remoteok.js";
@@ -21,7 +22,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 interface CompanyEntry {
   name: string;
-  ats: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee";
+  ats: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "smartrecruiters";
   slug: string;
 }
 
@@ -38,6 +39,7 @@ async function fetchAllCompanies(): Promise<Job[]> {
       else if (c.ats === "ashby") jobs = await fetchAshby(c.name, c.slug);
       else if (c.ats === "workable") jobs = await fetchWorkable(c.name, c.slug);
       else if (c.ats === "recruitee") jobs = await fetchRecruitee(c.name, c.slug);
+      else if (c.ats === "smartrecruiters") jobs = await fetchSmartRecruiters(c.name, c.slug);
       results.push(...jobs);
       console.log(`  ${c.name}: ${jobs.length} jobs`);
     } catch (err) {

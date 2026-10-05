@@ -188,6 +188,51 @@ function extractJson(raw: string): string {
   return raw.trim();
 }
 
+/**
+ * Cheap pass before the expensive one below. This is a coarse, easy question -
+ * "is this even plausibly the right field and seniority tier" - not the nuanced
+ * "how well does it match" judgment the full scorer does. That distinction
+ * matters: Haiku struggled specifically with fine calibration (e.g. correctly
+ * weighing a Solutions Engineer posting against a Staff SDK posting), but a
+ * blunt "is this obviously wrong" check is a much easier task for it, and most
+ * of what fills a scoring queue - generic "Python Developer" postings from
+ * staffing agencies, unrelated backend/DevOps roles that only matched the
+ * title filter on the word "engineer" - is obviously wrong, not borderline.
+ *
+ * Trade-off worth knowing: this can occasionally reject something the full
+ * scorer would have rated well, since it's a cheaper, less careful pass. If
+ * jobs you'd expect to score decently start disappearing entirely (no row at
+ * all, not even a low score), that's this filter being too aggressive -
+ * worth reporting so the prompt can be loosened.
+ */
+async function quickRelevanceCheck(profileYaml: string, job: { title: string; company: string; description?: string }): Promise<boolean> {
+  const prompt = `Candidate's target titles and skills (from their profile):
+${profileYaml.match(/target_titles:[\s\S]*?(?=\n\w|\n$)/)?.[0] ?? profileYaml.slice(0, 500)}
+
+Job posting:
+Title: ${job.title}
+Company: ${job.company}
+${job.description ? `First part of description: ${job.description.slice(0, 300)}` : ""}
+
+Is this job PLAUSIBLY in the right field and seniority ballpark for this candidate -
+close enough that a detailed comparison is worth doing? This is a coarse filter, not a
+precise judgment - answer YES unless it's clearly, obviously wrong (a completely
+different field, or a seniority tier far outside their range). When genuinely unsure,
+answer YES and let the detailed review decide.
+
+Respond with exactly one word: YES or NO.`;
+
+  const response = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 10,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const textBlock = response.content.find((b) => b.type === "text");
+  const raw = textBlock && "text" in textBlock ? textBlock.text : "YES";
+  return !raw.trim().toUpperCase().startsWith("NO"); // default to YES (keep it) on any ambiguity
+}
+
 async function main() {
   const profileYaml = loadProfile();
   const jobs = getUnscoredJobs();
@@ -197,8 +242,32 @@ async function main() {
     return;
   }
 
-  console.log(`Scoring ${jobs.length} jobs...`);
+  console.log(`Screening ${jobs.length} jobs with a quick relevance check first...`);
+  let screenedOut = 0;
+  const toFullyScore: typeof jobs = [];
+
   for (const job of jobs) {
+    try {
+      const relevant = await quickRelevanceCheck(profileYaml, job);
+      if (relevant) {
+        toFullyScore.push(job);
+      } else {
+        screenedOut++;
+        setScore(job.id!, 0, "Screened out by quick relevance check (obviously wrong field/seniority) before the detailed review - not a full assessment.", "skip", {
+          salary_range: "Not listed", work_arrangement: "Unclear", summary: "", tech_stack: [], requirements: [],
+        });
+        console.log(`  [screened out] ${job.company} - ${job.title}`);
+      }
+    } catch (err) {
+      // if the cheap check itself fails, don't lose the job - just send it to
+      // full scoring rather than silently dropping it
+      toFullyScore.push(job);
+    }
+  }
+
+  console.log(`\n${screenedOut} screened out cheaply, ${toFullyScore.length} moving on to full scoring...\n`);
+
+  for (const job of toFullyScore) {
     try {
       const result = await scoreJob(profileYaml, job);
       setScore(job.id!, result.fit_score, result.reasoning, result.recommendation, {

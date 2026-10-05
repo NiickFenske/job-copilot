@@ -1,5 +1,5 @@
 export interface AtsMatch {
-  ats: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee";
+  ats: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "smartrecruiters";
   slug: string;
   foundOnUrl: string;
 }
@@ -23,6 +23,7 @@ const ATS_PATTERNS: { ats: AtsMatch["ats"]; regex: RegExp }[] = [
   { ats: "ashby", regex: /jobs\.ashbyhq\.com\/([a-zA-Z0-9_-]+)/ },
   { ats: "workable", regex: /apply\.workable\.com\/([a-zA-Z0-9_-]+)/ },
   { ats: "recruitee", regex: /([a-zA-Z0-9_-]+)\.recruitee\.com/ },
+  { ats: "smartrecruiters", regex: /jobs\.smartrecruiters\.com\/([a-zA-Z0-9_-]+)/ },
 ];
 
 // Common paths a "careers" link resolves to - tried in order, first hit wins.

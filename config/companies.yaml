@@ -52,6 +52,9 @@
 - name: "Nango"
   ats: ashby
   slug: "Nango"
+- name: "Ready Set Rocket"
+  ats: smartrecruiters
+  slug: "Sia"
 
 # --- VALID BOARD, NO OPENINGS RIGHT NOW: kept so new postings get picked up ---
 # (Workable answers with an empty job list; a warning prints each run. Harmless.)

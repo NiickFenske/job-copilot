@@ -9,9 +9,6 @@
 - name: "Rebuy"
   ats: ashby
   slug: "rebuy"
-- name: "Smile.io"
-  ats: lever
-  slug: "Smile"
 - name: "Tapcart"
   ats: ashby
   slug: "tapcart"
@@ -21,6 +18,9 @@
 - name: "Privy"
   ats: workable
   slug: "privy-2"
+- name: "Ready Set Rocket"
+  ats: smartrecruiters
+  slug: "Sia"
 - name: "Pixel Union"
   ats: workable
   slug: "pixel-union"
