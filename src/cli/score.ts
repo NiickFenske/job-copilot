@@ -3,12 +3,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import "dotenv/config";
-import Anthropic from "@anthropic-ai/sdk";
+import { runAi, backend, modelFor, AiLimitError, AiSetupError } from "../ai.js";
 
 import { getUnscoredJobs, setScore } from "../db/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const anthropic = new Anthropic(); // reads ANTHROPIC_API_KEY from env
 
 function loadProfile(): string {
   const profilePath = path.resolve(__dirname, "../../config/profile.yaml");
@@ -152,21 +151,7 @@ block like this, with nothing after it:
 {"fit_score": <0-100 integer>, "recommendation": "<apply|consider|skip>", "reasoning": "<2-4 sentences>", "salary_range": "<string>", "work_arrangement": "<Remote|Hybrid|Onsite|Unclear>", "summary": "<1-2 sentences>", "tech_stack": ["..."], "requirements": ["..."]}
 \`\`\``;
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-5", // scoring requires real comparative judgment (matching specific posting fragments against specific resume evidence, resisting stereotypes about job titles) - this proved too subtle for the cheaper Haiku model to do reliably, so worth the higher per-job cost since this only runs against new postings each day, not the whole backlog
-    max_tokens: 2048, // generous headroom for the reasoning-before-JSON step - too little here means the response gets cut off before ever reaching the JSON block, which surfaces as a confusing "invalid JSON" error rather than an obvious truncation
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const textBlock = response.content.find((b) => b.type === "text");
-  const raw = textBlock && "text" in textBlock ? textBlock.text : "{}";
-
-  if (response.stop_reason === "max_tokens") {
-    throw new Error(
-      `response was cut off (hit the ${2048}-token limit) before completing - the model's ` +
-      `reasoning likely ran too long. This is a truncation issue, not a JSON formatting bug.`
-    );
-  }
+  const { text: raw } = await runAi({ tier: "score", prompt, maxTokens: 2048 });
 
   return JSON.parse(extractJson(raw)) as ScoreResult;
 }
@@ -204,9 +189,14 @@ function extractJson(raw: string): string {
  * jobs you'd expect to score decently start disappearing entirely (no row at
  * all, not even a low score), that's this filter being too aggressive -
  * worth reporting so the prompt can be loosened.
+ *
+ * Exception: anything that mentions Shopify (title, company or description) skips
+ * this check and always goes to full scoring, since Shopify work is a core target.
  */
 async function quickRelevanceCheck(profileYaml: string, job: { title: string; company: string; description?: string }): Promise<boolean> {
-  const prompt = `Candidate's target titles and skills (from their profile):
+  if (/shopify/i.test(`${job.title} ${job.company} ${job.description ?? ""}`)) return true;
+
+  const prompt =`Candidate's target titles and skills (from their profile):
 ${profileYaml.match(/target_titles:[\s\S]*?(?=\n\w|\n$)/)?.[0] ?? profileYaml.slice(0, 500)}
 
 Job posting:
@@ -222,31 +212,67 @@ answer YES and let the detailed review decide.
 
 Respond with exactly one word: YES or NO.`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 10,
-    messages: [{ role: "user", content: prompt }],
-  });
+  const { text } = await runAi({ tier: "screen", prompt, maxTokens: 10 });
+  // Anything other than a clear NO keeps the job ("NOT sure", "**YES**", empty reply, ...):
+  // a wrongly dropped job is worse than one extra full review.
+  return !/^\W*NO\b/i.test(text.trim());
+}
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  const raw = textBlock && "text" in textBlock ? textBlock.text : "YES";
-  return !raw.trim().toUpperCase().startsWith("NO"); // default to YES (keep it) on any ambiguity
+/** Run `fn` over `items` with at most `limit` in flight; stops handing out work once `shouldStop()` is true. */
+async function runPool<T>(items: T[], limit: number, shouldStop: () => boolean, fn: (item: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  const workers = Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, async () => {
+    while (!shouldStop()) {
+      const i = next++;
+      if (i >= items.length) return;
+      await fn(items[i]);
+    }
+  });
+  await Promise.all(workers);
 }
 
 async function main() {
   const profileYaml = loadProfile();
-  const jobs = getUnscoredJobs();
+  let jobs = getUnscoredJobs();
 
   if (jobs.length === 0) {
     console.log("No unscored jobs found. Run \"npm run fetch\" first.");
     return;
   }
 
+  // A cap per run protects a subscription's allowance while you find out what a normal day costs.
+  const cap = Number(process.env.SCORE_LIMIT) || Infinity;
+  if (jobs.length > cap) {
+    console.log(`SCORE_LIMIT=${cap}: scoring ${cap} of ${jobs.length} unscored jobs this run, the rest stay queued.`);
+    jobs = jobs.slice(0, cap);
+  }
+
+  const concurrency = Number(process.env.AI_CONCURRENCY) || 2;
+  console.log(
+    backend() === "claude-cli"
+      ? `AI backend: headless Claude Code on your subscription (screen: ${modelFor("screen")}, score: ${modelFor("score")}, ${concurrency} at a time)`
+      : `AI backend: Anthropic API (AI_BACKEND=api) - billed per token`
+  );
+
+  let stopReason: string | null = null;
+  let estimatedCost = 0;
+  const shouldStop = () => stopReason !== null;
+  const noteStop = (err: unknown) => {
+    if (err instanceof AiLimitError || err instanceof AiSetupError) {
+      if (!stopReason) {
+        stopReason = err.message;
+        console.error(`\n  STOPPING: ${err.message}`);
+      }
+      return true;
+    }
+    return false;
+  };
+
   console.log(`Screening ${jobs.length} jobs with a quick relevance check first...`);
   let screenedOut = 0;
   const toFullyScore: typeof jobs = [];
 
-  for (const job of jobs) {
+  await runPool(jobs, concurrency, shouldStop, async (job) => {
     try {
       const relevant = await quickRelevanceCheck(profileYaml, job);
       if (relevant) {
@@ -259,15 +285,16 @@ async function main() {
         console.log(`  [screened out] ${job.company} - ${job.title}`);
       }
     } catch (err) {
-      // if the cheap check itself fails, don't lose the job - just send it to
-      // full scoring rather than silently dropping it
+      if (noteStop(err)) return; // out of allowance / not signed in: the full scorer would fail the same way
+      // any other failure of the cheap check: keep the job and let full scoring decide
       toFullyScore.push(job);
     }
-  }
+  });
 
   console.log(`\n${screenedOut} screened out cheaply, ${toFullyScore.length} moving on to full scoring...\n`);
 
-  for (const job of toFullyScore) {
+  let scored = 0;
+  await runPool(toFullyScore, concurrency, shouldStop, async (job) => {
     try {
       const result = await scoreJob(profileYaml, job);
       setScore(job.id!, result.fit_score, result.reasoning, result.recommendation, {
@@ -277,14 +304,20 @@ async function main() {
         tech_stack: result.tech_stack,
         requirements: result.requirements,
       });
+      scored++;
       console.log(`  [${result.fit_score}] ${result.recommendation.padEnd(8)} ${job.company} - ${job.title}`);
     } catch (err) {
+      if (noteStop(err)) return;
       console.warn(`  failed to score "${job.title}" at ${job.company}:`, (err as Error).message);
     }
-  }
+  });
 
-  console.log(`\nDone. Run "npm run tailor" to draft resumes/cover letters for the "apply" recommendations,`);
+  const left = getUnscoredJobs().length;
+  console.log(`\n${scored} scored, ${screenedOut} screened out, ${left} still unscored${stopReason ? " (run stopped early - see above)" : ""}.`);
+  if (left > 0 && !stopReason) console.log(`Some jobs failed individually; re-run "npm run score" to retry just those.`);
+  console.log(`Run "npm run tailor" to draft resumes/cover letters for the "apply" recommendations,`);
   console.log(`or "npm run dashboard" to review everything in the browser.`);
+  if (stopReason) process.exitCode = 2; // lets the panel (and any script) tell "stopped early" from "finished"
 }
 
 main().catch((err) => {

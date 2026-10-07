@@ -2,12 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import "dotenv/config";
-import Anthropic from "@anthropic-ai/sdk";
+import { runAi, AiLimitError, AiSetupError } from "../ai.js";
 
 import { getScoredUntailoredJobs, setTailored } from "../db/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const anthropic = new Anthropic();
 
 function loadProfile(): string {
   const profilePath = path.resolve(__dirname, "../../config/profile.yaml");
@@ -39,14 +38,8 @@ RESUME_BULLETS:
 COVER_LETTER:
 ...`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-5", // stronger model - cover letters/resume bullets are the thing a human (recruiter) actually reads, so writing quality matters here in a way it doesn't for scoring
-    max_tokens: 1200,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const textBlock = response.content.find((b) => b.type === "text");
-  return textBlock && "text" in textBlock ? textBlock.text : "";
+  const { text } = await runAi({ tier: "tailor", prompt, maxTokens: 1200 });
+  return text;
 }
 
 async function main() {
@@ -73,6 +66,13 @@ async function main() {
       setTailored(job.id!, filePath, filePath);
       console.log(`  wrote ${filePath}`);
     } catch (err) {
+      if (err instanceof AiLimitError || err instanceof AiSetupError) {
+        // Out of allowance / not signed in: every remaining job would fail the same way.
+        console.error(`\n  STOPPING: ${err.message}`);
+        console.error(`  Jobs without drafts stay queued - re-run "npm run tailor" later.`);
+        process.exitCode = 2;
+        break;
+      }
       console.warn(`  failed to draft materials for "${job.title}" at ${job.company}:`, (err as Error).message);
     }
   }

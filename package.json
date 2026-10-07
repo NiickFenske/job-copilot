@@ -10,7 +10,8 @@
     "reset-scores": "tsx src/cli/reset-scores.ts",
     "score": "tsx src/cli/score.ts",
     "tailor": "tsx src/cli/tailor.ts",
-    "dashboard": "npm --prefix dashboard run dev"
+    "dashboard": "npm --prefix dashboard run dev",
+    "ai-check": "tsx src/cli/ai-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
