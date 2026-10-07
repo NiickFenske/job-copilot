@@ -46,7 +46,7 @@ export interface AiResult {
 }
 
 const DEFAULT_MODELS: Record<Tier, string> = {
-  screen: "claude-haiku-4-5-20251001", // cheap yes/no relevance screen
+  screen: "claude-haiku-5-5", // cheap yes/no relevance screen
   score: "claude-sonnet-5", // nuanced fit scoring
   tailor: "claude-sonnet-5", // cover letters / resume bullets a human reads
 };

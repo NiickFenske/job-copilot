@@ -28,7 +28,7 @@ Other commands: `discover` (find ATS boards for candidate companies), `add-job`,
 - Headless calls use `--safe-mode`, not `--bare`. `--bare` cannot use subscription auth.
 - `ai.ts` removes `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` and related variables from the child process so a stray key can't redirect billing.
 - Calls run in a scratch directory under the OS temp dir, so this file does not affect scoring.
-- Models: screen = `claude-haiku-4-5-20251001`, score and tailor = `claude-sonnet-5`. Override with `AI_MODEL_SCREEN`, `AI_MODEL_SCORE`, `AI_MODEL_TAILOR`.
+- Models: screen = `claude-haiku-5-5`, score and tailor = `claude-sonnet-5`. Override with `AI_MODEL_SCREEN`, `AI_MODEL_SCORE`, `AI_MODEL_TAILOR`.
 - Useful env vars: `AI_CONCURRENCY` (default 2), `SCORE_LIMIT` (cap jobs per run).
 - On a usage limit or setup error the run stops cleanly with exit code 2 and leaves jobs unscored for the next run. The real limit-message wording is not confirmed yet, so `classifyError` in `ai.ts` may need adjusting the first time a real limit appears.
 - `npm run ai-check` shows auth status. `npm run ai-check -- --ping` makes one tiny test call.
